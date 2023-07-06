@@ -1,32 +1,20 @@
 use tide::Request;
 
 #[derive(serde::Deserialize)]
-#[serde(default)]
-struct NameParams {
-    pub name: String,
+struct Rust {
+    name: String,
+    version: f32,
 }
 
-impl Default for NameParams {
-    fn default() -> Self {
-        Self {
-            name: "world".to_string(),
-        }
-    }
+async fn create(mut req: Request<()>) -> tide::Result<String> {
+    let rust: Rust = req.body_json().await?;
+    Ok(format!("Hello {}! Your Rust version is {}.", rust.name, rust.version))
 }
 
-async fn handle_name(req: Request<()>) -> tide::Result<String> {
-    let name = req
-        .url()
-        .query_pairs()
-        .find(|(key, _)| key == "name")
-        .map(|(_, value)| value);
-
-    Ok(format!("Hello, {}!", name.unwrap_or("world".into())))
-}
 #[tokio::main]
 async fn main() -> tide::Result<()> {
     let mut app = tide::new();
-    app.at("/").get(handle_name);
+    app.at("/rust").post(create);
     app.listen("0.0.0.0:8080").await?;
     Ok(())
 }
